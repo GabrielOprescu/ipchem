@@ -1,0 +1,339 @@
+---
+title: "IPCHEM Data Statistics"
+output:
+  flexdashboard::flex_dashboard:
+  # flexdashboard::valueBox():
+  # html_document:
+  #   self_contained: yes
+    vertical_layout: scroll
+    orientation: rows
+---
+
+```{r setup, include=FALSE}
+library(DT)
+library(plotly)
+library(tidyverse)
+library(flexdashboard)
+# library(dygraphs)
+library(leaflet)
+# library(maps)
+source("fnutils.R")
+```
+
+
+
+```{r raw_data, echo=FALSE, warning=FALSE}
+
+# load main data
+list_of_packages <-
+  read.table(
+    "./data/IPCHEM_public_dataset_packages.csv",
+    header = TRUE,
+    sep = ",",
+    quote = "\"",
+    dec = ".",
+    encoding = "UTF-8"
+  )
+
+list_of_packages = chg_col_names(list_of_packages)
+
+world_cities <-
+  read.table(
+    "./data/worldcities.csv",
+    header = TRUE,
+    sep = ",",
+    quote = "\"",
+    dec = ".",
+    encoding = "UTF-8"
+  )
+
+coordinates <- world_cities %>% 
+  dplyr::filter(capital == 'primary') #%>%
+  # rename(COUNTRY_CODE = iso3)
+```
+
+
+```{r global, echo=FALSE, warning=FALSE}
+
+# counts
+n_datasets = length(unique(list_of_packages$dataset[list_of_packages$dataset != ""]))
+n_packages = length(unique(list_of_packages$package[list_of_packages$media != ""]))
+
+# sums
+
+sum_records = sum(list_of_packages$records[list_of_packages$media != ""])
+
+# create pivot tables
+pivot_media <- list_of_packages %>%
+  dplyr::filter(media != "") %>% # is NA or empty string?
+  group_by(media) %>%
+  summarize(
+    packages = n(),
+    records = sum(records)
+    )
+
+pivot_dataset = list_of_packages %>% 
+  dplyr::filter(!is.na(dataset)) %>% 
+  group_by(dataset) %>% 
+  summarize(
+    packages = n(),
+    records = sum(records)
+    )
+
+# pivot_chemicals <- list_of_packages %>%
+#   group_by(chemical_name) %>%
+#   summarize(records = sum(records))
+
+pivot_period <- list_of_packages %>% 
+  dplyr::filter(!is.na(period))  %>%
+  group_by(period) %>%
+  summarize(records = sum(records))
+
+# pivot_period_media <- list_of_packages %>% 
+#   dplyr::filter(media != "")  %>%
+#   group_by(period, media) %>%
+#   summarize(records = sum(records))
+
+# pivot_datasets <- list_of_packages %>% 
+#   dplyr::filter(dataset != "") %>%
+#   group_by(dataset) %>%
+#   summarize(packages = n())
+
+# pivot_packages <- list_of_packages %>%
+#   dplyr::filter(media != "")  %>%
+#   group_by(package) %>%
+#   summarize(packages = n()) # seems like package is unique. only 2 are duplicate
+
+# records <- list_of_packages %>%
+#   dplyr::filter(media != "")  %>%
+#   summarize(records = sum(records))
+
+locations <- list_of_packages %>% 
+  dplyr::filter(media != "")  %>% # probably the sign was != and not ==
+  select(location, period) %>% 
+  separate_rows(location, sep = ", ", convert = TRUE) %>% 
+  mutate(country_code = str_split_fixed(location, ' \\[', 2)[, 1]) %>% 
+  mutate(score = str_split_fixed(location, ' \\[', 2)[, 2]) %>%
+  mutate(score = as.numeric(str_sub(score, 1, str_length(score) - 1))) %>% 
+  select(-location)
+
+
+# separated_location <- separate_rows(locations,LOCATION, sep = ", ", convert = TRUE)
+# separated_location[c('COUNTRY_CODE','SCORE')] <- str_split_fixed(separated_location$LOCATION, ' \\[', 2)
+# separated_location$SCORE <- as.numeric(substring(separated_location$SCORE,1,nchar(separated_location$SCORE)-1))
+
+pivot_country = locations %>% 
+  dplyr::filter(!is_null(country_code)) %>% 
+  dplyr::filter(country_code != "null") %>% 
+  group_by(country_code) %>% 
+  summarize(scores = sum(score))
+
+pivot_country_period = locations %>%
+  dplyr::filter(!is_null(country_code)) %>% 
+  dplyr::filter(country_code != "null") %>%
+  dplyr::filter(!is.na(period)) %>% 
+  group_by(country_code, period) %>%
+  summarize(scores = sum(score)) %>% 
+  ungroup()
+
+pivot_country_period = pivot_country_period %>% 
+  bind_rows(pivot_country_period %>% 
+              group_by(period) %>% 
+              summarize(scores = sum(scores)) %>% 
+              mutate(country_code = "TOTAL") %>% 
+              select(country_code, period, scores))
+
+# country_list <- separated_location %>%
+#   group_by(COUNTRY_CODE) %>%
+#   summarize("Number of Scores" = format(sum(SCORE), big.mark = ","))
+
+# create map
+
+country_coordinates <- pivot_country %>%
+  left_join(coordinates, by = join_by(country_code == iso3)) %>%
+  filter(!is.na(city))
+
+content_popup <- paste(
+  sep = "<br/>",
+  paste("<b>", country_coordinates$country, "</b>"),
+  format(country_coordinates$scores, big.mark = ",")
+)
+
+content_label <-
+  paste(
+    country_coordinates$country,
+    ": ",
+    format(country_coordinates$scores, big.mark = ",")
+  )
+
+
+```
+
+Row
+-------------------------------------
+
+### Number of Datasets
+
+```{r}
+
+valueBox(prettyNum(n_datasets, big.mark = ","), icon = "fa-database", color = "blue")
+
+```
+
+### Number of Packages
+
+```{r}
+
+valueBox(prettyNum(n_packages, big.mark = ","), icon = "fa-database", color = "orange")
+
+```
+
+### Number of Records
+
+```{r}
+
+valueBox(prettyNum(sum_records, big.mark = ","), icon = "fa-database", color = "green")
+
+```
+
+
+Row
+-------------------------------------
+
+### records per Year
+
+```{r}
+#DT::datatable(pivot_period, options = list(
+#  bPaginate = FALSE)) %>%
+#  formatCurrency('Number of Records',currency = "", interval = 3, mark = ".", digit = 0)
+
+
+fig_all_records <-
+  plot_ly(
+    x = ~ period,
+    y = ~ records,
+    data = pivot_period,
+    type = 'bar'
+  ) %>%
+  layout(
+    # title = 'Records per year',
+    plot_bgcolor = '#e5ecf6',
+    xaxis = list(
+      title = 'Year',
+      zerolinecolor = '#ffff',
+      zerolinewidth = 2,
+      gridcolor = 'ffff'
+    ),
+    yaxis = list(
+      title = 'Number of Records',
+      zerolinecolor = '#ffff',
+      zerolinewidth = 2,
+      gridcolor = 'ffff'))
+
+fig_all_records
+
+
+
+#fullJoinDf <- full_join(years,pivot_period_media)
+#View(fullJoinDf)
+
+
+#fig <- plot_ly(pivot_period_media, x = years$PERIOD, y = pivot_period_media[pivot_period_media$Media == "Atmosphere", ], type = 'bar', name = 'Atmosphere')
+#fig <- fig %>% add_trace(y = pivot_period_media[pivot_period_media$Media == "Biota", ], name = 'Biota')
+#fig <- fig %>% layout(yaxis = list(title = 'Count'), barmode = 'stack')
+
+```
+
+Row
+-------------------------------------
+
+### Statistics by Media
+
+```{r}
+DT::datatable(pivot_media,
+              options = list(dom = 't',
+                             bPaginate = FALSE)) 
+
+```
+
+
+### Statistics by Country
+
+```{r}
+
+DT::datatable(pivot_country,
+              options = list(dom = 't',
+                             bPaginate = FALSE))
+
+```
+
+### Statistics by Dataset
+
+```{r}
+
+
+DT::datatable(pivot_dataset,
+              options = list(dom = 't',
+                             bPaginate = FALSE))
+
+```
+
+Row
+-------------------------------------
+
+### Map distribution of data records
+
+```{r}
+
+
+m <-
+  leaflet(data = country_coordinates, options = leafletOptions(minZoom = 2, maxZoom = 9)) %>%
+  setView(14.4214, 50.0875, zoom = 3) %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  #addProviderTiles("OpenStreetMap.Mapnik") %>%
+  
+  addMarkers(
+    ~ lng,
+    ~ lat,
+    popup = ~ as.character(content_popup),
+    label = ~ as.character(content_label)
+  )
+
+m  # Print the map
+
+```
+
+
+### Country level records by year
+
+```{r}
+
+fig_all_records <-
+  plot_ly(
+    x = ~ period,
+    y = ~ scores,
+    data = pivot_country_period,
+    type = 'scatter',
+    mode = "lines",
+    name = ~ country_code
+  ) %>%
+  layout(
+    # title = 'Records per year and country',
+    plot_bgcolor = '#e5ecf6',
+    xaxis = list(
+      title = 'Year',
+      zerolinecolor = '#ffff',
+      zerolinewidth = 2,
+      gridcolor = 'ffff'
+    ),
+    yaxis = list(
+      title = 'Number of Records',
+      zerolinecolor = '#ffff',
+      zerolinewidth = 2,
+      gridcolor = 'ffff'),
+    showlegend= TRUE)
+
+fig_all_records
+
+```
+
