@@ -22,19 +22,13 @@ source("fnutils.R")
 
 
 
-```{r import_data, echo=FALSE, warning=FALSE}
+```{r import_data, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 
 # load main data
-list_of_packages <-
-  read.table(
-    "./data/IPCHEM_public_dataset_packages.csv",
-    header = TRUE,
-    sep = ",",
-    quote = "\"",
-    dec = ".",
-    encoding = "UTF-8"
-  )
 
+url = "https://ipchem.jrc.ec.europa.eu/public/IPCHEM_public_dataset_packages.csv"
+
+list_of_packages = get_csv_url(url)
 list_of_packages = chg_col_names(list_of_packages)
 
 world_cities <-
