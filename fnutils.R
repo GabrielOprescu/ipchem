@@ -2,6 +2,69 @@ library(httr2)
 library(readr)
 library(stringr)
 
+env_modules = data.frame(
+  dataset = c(
+    'AIRBASE',
+    'AIRMEX',
+    'AIRQUALITY',
+    'CHMS',
+    'CNRPFAS',
+    'DANISHHBM',
+    'DEMOCOPHES',
+    'EFSACONTAMINANTS',
+    'EFSAMCPD',
+    'EFSAMOPER',
+    'EFSAMYCOTOXINS',
+    'EFSAPAS',
+    'EFSAVMPR',
+    'EMODNETCHEM',
+    'EMPODAT',
+    'ESBUBA',
+    'FLEHS',
+    'HBM4EUAGGREGATED',
+    'HBM4EUALIGNEDSTUDIES',
+    'IBS',
+    'ISPRAPESTICIDESAGGREGATED',
+    'LIFEPERSUADED',
+    'NAIADES',
+    'OFFICAIR',
+    'PHARMSUBA',
+    'PROBEAGGREGATED',
+    'WATERBASETCM',
+    'WATERQUALITY'
+  ),
+  module = c(
+    'Environmental Monitoring',
+    'Indoor Air and Products',
+    'Environmental Monitoring',
+    'Human Biomonitoring',
+    'Environmental Monitoring',
+    'Human Biomonitoring',
+    'Human Biomonitoring',
+    'OTHER',
+    'Food and Feed',
+    'Food and Feed',
+    'Food and Feed',
+    'Food and Feed',
+    'Food and Feed',
+    'Environmental Monitoring',
+    'Environmental Monitoring',
+    'Human Biomonitoring',
+    'Human Biomonitoring',
+    'Human Biomonitoring',
+    'OTHER',
+    'Human Biomonitoring',
+    'Environmental Monitoring',
+    'Human Biomonitoring',
+    'Environmental Monitoring',
+    'Indoor Air and Products',
+    'Environmental Monitoring',
+    'Human Biomonitoring',
+    'Environmental Monitoring',
+    'Environmental Monitoring'
+  )
+)
+
 clean_name = function(nm) {
   return(
     str_to_lower(

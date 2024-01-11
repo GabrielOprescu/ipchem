@@ -5,6 +5,7 @@ output:
   # flexdashboard::valueBox():
   # html_document:
   #   self_contained: yes
+    # self_contained: false
     vertical_layout: scroll
     orientation: rows
 ---
@@ -16,10 +17,17 @@ library(DT)
 library(plotly)
 library(flexdashboard)
 library(leaflet)
-# library(maps)
 source("fnutils.R")
 ```
 
+Sidebar {.sidebar}
+=======================================================================
+
+We start adding text here
+
+<p>
+This is <b>where</b> the explanations are added
+</p>
 
 
 ```{r import_data, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
@@ -65,6 +73,11 @@ pivot_media <- list_of_packages %>%
     records = sum(records)
     )
 
+pivot_media_period <- list_of_packages %>%
+  dplyr::filter(media != "") %>% # is NA or empty string?
+  group_by(media, period) %>%
+  summarize(records = sum(records))
+
 # record and packages by dataset
 pivot_dataset = list_of_packages %>% 
   dplyr::filter(!is.na(dataset)) %>% 
@@ -74,8 +87,29 @@ pivot_dataset = list_of_packages %>%
     records = sum(records)
     )
 
+pivot_dataset_period = list_of_packages %>%
+  dplyr::filter(!is.na(dataset)) %>%
+  group_by(dataset, period) %>%
+  summarize(records = sum(records))
+
+# record by module and period
+pivot_module = list_of_packages %>% 
+  dplyr::filter(!is.na(dataset)) %>% 
+  select(dataset, records) %>% 
+  left_join(env_modules, by = join_by(dataset == dataset)) %>% 
+  group_by(module) %>% 
+  summarize(records = sum(records))
+
+# record by module and period
+pivot_module_period = list_of_packages %>% 
+  dplyr::filter(!is.na(dataset)) %>% 
+  select(dataset, period, records) %>% 
+  left_join(env_modules, by = join_by(dataset == dataset)) %>% 
+  group_by(module, period) %>% 
+  summarize(records = sum(records))
+
 # number of record by year
-pivot_period <- list_of_packages %>% 
+pivot_period <- list_of_packages %>%
   dplyr::filter(!is.na(period))  %>%
   group_by(period) %>%
   summarize(records = sum(records))
@@ -115,13 +149,13 @@ pivot_country_period = pivot_country_period %>%
   filter(!is.na(country)) %>% # 1A0 country code does not exist in coordinates. what is it?
   select(country, period, scores)
 
-# create also the total for each country are record it as a country
-pivot_country_period = pivot_country_period %>% 
-  bind_rows(pivot_country_period %>% 
-              group_by(period) %>% 
-              summarize(scores = sum(scores)) %>% 
-              mutate(country = "TOTAL") %>% 
-              select(country, period, scores))
+# # create also the total for each country are record it as a country
+# pivot_country_period = pivot_country_period %>% 
+#   bind_rows(pivot_country_period %>% 
+#               group_by(period) %>% 
+#               summarize(scores = sum(scores)) %>% 
+#               mutate(country = "TOTAL") %>% 
+#               select(country, period, scores))
 
 # create map
 # extract coordinates for each country capital 
@@ -145,6 +179,16 @@ content_label <-
 
 
 ```
+
+```{r}
+# cleanup
+
+rm(list_of_packages, locations, world_cities)
+
+```
+
+Dashboard
+=======================================================================
 
 Row
 -------------------------------------
@@ -176,12 +220,10 @@ valueBox(prettyNum(sum_records, big.mark = ","), icon = "fa-database", color = "
 
 Row
 -------------------------------------
-
-### Records per Year
+### Records per year
 
 ```{r}
-
-fig_all_records <-
+fig <-
   plot_ly(
     x = ~ period,
     y = ~ records,
@@ -201,14 +243,148 @@ fig_all_records <-
       title = 'Number of Records',
       zerolinecolor = '#ffff',
       zerolinewidth = 2,
-      gridcolor = 'ffff'))
+      gridcolor = 'ffff'
+    )
+  )
 
-fig_all_records
-
+fig
 ```
+
+
 
 Row
 -------------------------------------
+
+### Module
+
+```{r}
+
+fig <-
+  pivot_module_period %>%
+  filter(period >= 1990) %>%
+  mutate(module = str_sub(module, 1, 10)) %>% # so the legend won't be pushed right
+  plot_ly(
+    x = ~ period,
+    y = ~ records,
+    # data = pivot_country_period,
+    type = 'scatter',
+    mode = "lines",
+    name = ~ module,
+    fill = 'tozeroy'
+  ) %>%
+  layout(
+    # title = 'Records per year and country',
+    plot_bgcolor = '#e5ecf6',
+    xaxis = list(
+      title = 'Year',
+      zerolinecolor = '#ffff',
+      zerolinewidth = 2,
+      gridcolor = 'ffff'
+    ),
+    yaxis = list(
+      title = 'Number of Records',
+      zerolinecolor = '#ffff',
+      zerolinewidth = 2,
+      gridcolor = 'ffff'
+    ),
+    legend = list(x = 0.1, y = 0.9),
+    showlegend = TRUE
+  )
+
+fig
+
+```
+
+### Dataset
+```{r}
+
+fig <-
+  pivot_dataset_period %>%
+  filter(period >= 1990) %>%
+  mutate(dataset = str_sub(dataset, 1, 10)) %>% # so the legend won't be pushed right
+  plot_ly(
+    x = ~ period,
+    y = ~ records,
+    # data = pivot_country_period,
+    type = 'scatter',
+    mode = "lines",
+    name = ~ dataset,
+    fill = 'tozeroy'
+  ) %>%
+  layout(
+    # title = 'Records per year and dataset',
+    plot_bgcolor = '#e5ecf6',
+    xaxis = list(
+      title = 'Year',
+      zerolinecolor = '#ffff',
+      zerolinewidth = 2,
+      gridcolor = 'ffff'
+    ),
+    yaxis = list(
+      title = 'Number of Records',
+      zerolinecolor = '#ffff',
+      zerolinewidth = 2,
+      gridcolor = 'ffff'
+    ),
+    legend = list(x = 0.1, y = 0.9),
+    showlegend = TRUE
+  )
+
+fig
+```
+
+### Media
+```{r}
+
+fig <-
+  pivot_media_period %>%
+  filter(period >= 1990) %>%
+  mutate(media = str_sub(media, 1, 10)) %>% # so the legend won't be pushed right
+  plot_ly(
+    x = ~ period,
+    y = ~ records,
+    # data = pivot_country_period,
+    type = 'scatter',
+    mode = "lines",
+    name = ~ media,
+    fill = 'tozeroy'
+  ) %>%
+  layout(
+    # title = 'Records per year and dataset',
+    plot_bgcolor = '#e5ecf6',
+    xaxis = list(
+      title = 'Year',
+      zerolinecolor = '#ffff',
+      zerolinewidth = 2,
+      gridcolor = 'ffff'
+    ),
+    yaxis = list(
+      title = 'Number of Records',
+      zerolinecolor = '#ffff',
+      zerolinewidth = 2,
+      gridcolor = 'ffff'
+    ),
+    legend = list(x = 0.1, y = 0.9),
+    showlegend = TRUE
+  )
+
+fig
+
+```
+
+
+Row
+-------------------------------------
+
+### Statistics by Module
+
+```{r}
+
+DT::datatable(pivot_module,
+              options = list(dom = 't',
+                             bPaginate = FALSE))
+
+```
 
 ### Statistics by Media
 
@@ -216,17 +392,6 @@ Row
 DT::datatable(pivot_media,
               options = list(dom = 't',
                              bPaginate = FALSE)) 
-
-```
-
-
-### Statistics by Country
-
-```{r}
-
-DT::datatable(pivot_country,
-              options = list(dom = 't',
-                             bPaginate = FALSE))
 
 ```
 
@@ -240,6 +405,9 @@ DT::datatable(pivot_dataset,
                              bPaginate = FALSE))
 
 ```
+
+
+
 
 Row
 -------------------------------------
@@ -273,6 +441,7 @@ m  # Print the map
 
 fig <-
   pivot_country_period %>%
+  filter(period >= 1990) %>% 
   mutate(country = str_sub(country, 1, 13)) %>% # so the legend won't be pushed right
   plot_ly(
     x = ~ period,
