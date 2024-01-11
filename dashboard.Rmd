@@ -23,11 +23,30 @@ source("fnutils.R")
 Sidebar {.sidebar}
 =======================================================================
 
-We start adding text here
+This space is reserved for adding information about the charts and tables in the dashboard.
 
-<p>
-This is <b>where</b> the explanations are added
-</p>
+<hr>
+
+<style>
+        strong {
+            font-weight: bold;
+        }
+</style>
+
+<p>This report was created on:</p>
+
+<strong id="currentDate"></strong>
+<script>
+  var currentDate = new Date();
+  var day = currentDate.getDate();
+  var month = currentDate.toLocaleString('default', { month: 'short' }); // Using the toLocaleString method to get the short month name
+  var year = currentDate.getFullYear();
+
+  var formattedDate = day + '-' + month.toUpperCase() + '-' + year;
+
+  document.getElementById('currentDate').innerHTML = formattedDate;
+</script>
+
 
 
 ```{r import_data, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
@@ -71,7 +90,9 @@ pivot_media <- list_of_packages %>%
   summarize(
     packages = n(),
     records = sum(records)
-    )
+    ) %>% 
+  ungroup() %>% 
+  arrange(desc(records))
 
 pivot_media_period <- list_of_packages %>%
   dplyr::filter(media != "") %>% # is NA or empty string?
@@ -85,7 +106,9 @@ pivot_dataset = list_of_packages %>%
   summarize(
     packages = n(),
     records = sum(records)
-    )
+    )%>% 
+  ungroup() %>% 
+  arrange(desc(records))
 
 pivot_dataset_period = list_of_packages %>%
   dplyr::filter(!is.na(dataset)) %>%
@@ -98,7 +121,9 @@ pivot_module = list_of_packages %>%
   select(dataset, records) %>% 
   left_join(env_modules, by = join_by(dataset == dataset)) %>% 
   group_by(module) %>% 
-  summarize(records = sum(records))
+  summarize(records = sum(records))%>% 
+  ungroup() %>% 
+  arrange(desc(records))
 
 # record by module and period
 pivot_module_period = list_of_packages %>% 
@@ -295,43 +320,7 @@ fig
 
 ```
 
-### Dataset
-```{r}
 
-fig <-
-  pivot_dataset_period %>%
-  filter(period >= 1990) %>%
-  mutate(dataset = str_sub(dataset, 1, 10)) %>% # so the legend won't be pushed right
-  plot_ly(
-    x = ~ period,
-    y = ~ records,
-    # data = pivot_country_period,
-    type = 'scatter',
-    mode = "lines",
-    name = ~ dataset,
-    fill = 'tozeroy'
-  ) %>%
-  layout(
-    # title = 'Records per year and dataset',
-    plot_bgcolor = '#e5ecf6',
-    xaxis = list(
-      title = 'Year',
-      zerolinecolor = '#ffff',
-      zerolinewidth = 2,
-      gridcolor = 'ffff'
-    ),
-    yaxis = list(
-      title = 'Number of Records',
-      zerolinecolor = '#ffff',
-      zerolinewidth = 2,
-      gridcolor = 'ffff'
-    ),
-    legend = list(x = 0.1, y = 0.9),
-    showlegend = TRUE
-  )
-
-fig
-```
 
 ### Media
 ```{r}
@@ -372,6 +361,43 @@ fig
 
 ```
 
+### Dataset
+```{r}
+
+fig <-
+  pivot_dataset_period %>%
+  filter(period >= 1990) %>%
+  mutate(dataset = str_sub(dataset, 1, 10)) %>% # so the legend won't be pushed right
+  plot_ly(
+    x = ~ period,
+    y = ~ records,
+    # data = pivot_country_period,
+    type = 'scatter',
+    mode = "lines",
+    name = ~ dataset,
+    fill = 'tozeroy'
+  ) %>%
+  layout(
+    # title = 'Records per year and dataset',
+    plot_bgcolor = '#e5ecf6',
+    xaxis = list(
+      title = 'Year',
+      zerolinecolor = '#ffff',
+      zerolinewidth = 2,
+      gridcolor = 'ffff'
+    ),
+    yaxis = list(
+      title = 'Number of Records',
+      zerolinecolor = '#ffff',
+      zerolinewidth = 2,
+      gridcolor = 'ffff'
+    ),
+    legend = list(x = 0.1, y = 0.9),
+    showlegend = TRUE
+  )
+
+fig
+```
 
 Row
 -------------------------------------
