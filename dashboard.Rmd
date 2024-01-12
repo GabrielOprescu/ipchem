@@ -2,12 +2,10 @@
 title: "IPCHEM Data Statistics"
 output:
   flexdashboard::flex_dashboard:
-  # flexdashboard::valueBox():
-  # html_document:
-  #   self_contained: yes
-    # self_contained: false
+    # logo: ./logo/eu.jpg
     vertical_layout: scroll
     orientation: rows
+    css: custom.css
 ---
 
 ```{r setup, include=FALSE}
@@ -27,11 +25,14 @@ This space is reserved for adding information about the charts and tables in the
 
 <hr>
 
-<style>
-        strong {
-            font-weight: bold;
-        }
-</style>
+<!-- <style> -->
+<!--         strong { -->
+<!--             font-weight: bold; -->
+<!--         } -->
+<!--         navbar { -->
+<!--             display: none; -->
+<!--         } -->
+<!-- </style> -->
 
 <p>This report was created on:</p>
 

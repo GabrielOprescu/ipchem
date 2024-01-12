@@ -1,0 +1,29 @@
+body {
+  padding-top: 10px !important;
+}
+
+.navbar {
+<!--  background-image: url('./logo/eu_negative.png'); -->
+  max-width: fit-content;
+}
+
+.navbar-inverse {
+  background-color: transparent;
+  visibility: hidden;
+}
+
+.navbar-nav>li {
+  visibility: hidden;
+}
+
+.navbar-brand {
+ visibility: hidden;
+}
+
+.section.sidebar {
+  top: 10px !important;
+}
+
+strong {
+  font-weight: bold;
+}
