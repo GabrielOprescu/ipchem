@@ -75,6 +75,10 @@ coordinates <- world_cities %>%
 
 ```{r global, echo=FALSE, warning=FALSE}
 
+list_of_packages = list_of_packages %>% 
+  dplyr::filter(!is.na(chemical_name)) %>% 
+  dplyr::filter(!is.na(period))
+
 # counts
 n_datasets = length(unique(list_of_packages$dataset[list_of_packages$dataset != ""]))
 n_packages = length(unique(list_of_packages$package[list_of_packages$media != ""]))
@@ -142,7 +146,7 @@ pivot_period <- list_of_packages %>%
 # split column location by each individual country and extract records
 locations <- list_of_packages %>% 
   dplyr::filter(media != "")  %>% # probably the sign was != and not ==
-  select(location, period) %>% 
+  select(location, period, chemical_name) %>% 
   separate_rows(location, sep = ", ", convert = TRUE) %>% 
   mutate(country_code = str_split_fixed(location, ' \\[', 2)[, 1]) %>% 
   mutate(score = str_split_fixed(location, ' \\[', 2)[, 2]) %>%
@@ -173,6 +177,31 @@ pivot_country_period = pivot_country_period %>%
             by = join_by(country_code == iso3)) %>% 
   filter(!is.na(country)) %>% # 1A0 country code does not exist in coordinates. what is it?
   select(country, period, scores)
+
+# which chemical has most of the records. top 10
+chemical_pivot = list_of_packages %>% 
+  filter(!is.na(chemical_name)) %>% 
+  group_by(chemical_name) %>% 
+  summarize(n = sum(records)) %>% 
+  arrange(desc(n)) %>% 
+  head(10)
+
+# after split by country, sum the chemical records by country only for top chemicals
+pivot_chemical_country = locations %>%
+  inner_join(chemical_pivot %>% select(chemical_name),
+             by = join_by(chemical_name == chemical_name)) %>%
+  group_by(chemical_name, country_code) %>%
+  summarize(records = sum(score))
+
+# bring the nice name of the country
+pivot_chemical_country = pivot_chemical_country %>% 
+  left_join(coordinates %>% 
+              select(country, iso3) %>% 
+              distinct(), # some countries have more than 1 primary city
+            by = join_by(country_code == iso3)) %>% 
+  filter(!is.na(country)) %>% # 1A0 country code does not exist in coordinates. what is it?
+  select(chemical_name, country, records)
+
 
 # # create also the total for each country are record it as a country
 # pivot_country_period = pivot_country_period %>% 
@@ -248,18 +277,20 @@ Row
 ### Records per year
 
 ```{r}
+
 fig <-
   plot_ly(
-    x = ~ period,
+    x = ~ country,
     y = ~ records,
-    data = pivot_period,
-    type = 'bar'
+    data = pivot_chemical_country,
+    type = 'bar',
+    name = ~chemical_name
   ) %>%
   layout(
     # title = 'Records per year',
     plot_bgcolor = '#e5ecf6',
     xaxis = list(
-      title = 'Year',
+      title = 'Country',
       zerolinecolor = '#ffff',
       zerolinewidth = 2,
       gridcolor = 'ffff'
@@ -273,6 +304,33 @@ fig <-
   )
 
 fig
+
+
+# fig <-
+#   plot_ly(
+#     x = ~ period,
+#     y = ~ records,
+#     data = pivot_period,
+#     type = 'bar'
+#   ) %>%
+#   layout(
+#     # title = 'Records per year',
+#     plot_bgcolor = '#e5ecf6',
+#     xaxis = list(
+#       title = 'Year',
+#       zerolinecolor = '#ffff',
+#       zerolinewidth = 2,
+#       gridcolor = 'ffff'
+#     ),
+#     yaxis = list(
+#       title = 'Number of Records',
+#       zerolinecolor = '#ffff',
+#       zerolinewidth = 2,
+#       gridcolor = 'ffff'
+#     )
+#   )
+# 
+# fig
 ```
 
 
@@ -287,7 +345,7 @@ Row
 fig <-
   pivot_module_period %>%
   filter(period >= 1990) %>%
-  mutate(module = str_sub(module, 1, 10)) %>% # so the legend won't be pushed right
+  # mutate(module = str_sub(module, 1, 10)) %>% # so the legend won't be pushed right
   plot_ly(
     x = ~ period,
     y = ~ records,
@@ -328,7 +386,7 @@ fig
 fig <-
   pivot_media_period %>%
   filter(period >= 1990) %>%
-  mutate(media = str_sub(media, 1, 10)) %>% # so the legend won't be pushed right
+  # mutate(media = str_sub(media, 1, 10)) %>% # so the legend won't be pushed right
   plot_ly(
     x = ~ period,
     y = ~ records,
@@ -367,7 +425,7 @@ fig
 fig <-
   pivot_dataset_period %>%
   filter(period >= 1990) %>%
-  mutate(dataset = str_sub(dataset, 1, 10)) %>% # so the legend won't be pushed right
+  # mutate(dataset = str_sub(dataset, 1, 10)) %>% # so the legend won't be pushed right
   plot_ly(
     x = ~ period,
     y = ~ records,
