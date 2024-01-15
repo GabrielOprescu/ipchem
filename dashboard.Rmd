@@ -15,6 +15,7 @@ library(DT)
 library(plotly)
 library(flexdashboard)
 library(leaflet)
+library(lubridate)
 source("fnutils.R")
 ```
 
@@ -36,17 +37,21 @@ This space is reserved for adding information about the charts and tables in the
 
 <p>This report was created on:</p>
 
-<strong id="currentDate"></strong>
-<script>
-  var currentDate = new Date();
-  var day = currentDate.getDate();
-  var month = currentDate.toLocaleString('default', { month: 'short' }); // Using the toLocaleString method to get the short month name
-  var year = currentDate.getFullYear();
+<!-- <strong id="currentDate"></strong> -->
+<!-- <script> -->
+<!--   var currentDate = new Date(); -->
+<!--   var day = currentDate.getDate(); -->
+<!--   var month = currentDate.toLocaleString('default', { month: 'short' }); // Using the toLocaleString method to get the short month name -->
+<!--   var year = currentDate.getFullYear(); -->
 
-  var formattedDate = day + '-' + month.toUpperCase() + '-' + year;
+<!--   var formattedDate = day + '-' + month.toUpperCase() + '-' + year; -->
 
-  document.getElementById('currentDate').innerHTML = formattedDate;
-</script>
+<!--   document.getElementById('currentDate').innerHTML = formattedDate; -->
+<!-- </script> -->
+
+<strong>
+`r Sys.Date()`
+</strong>
 
 
 
@@ -185,7 +190,7 @@ chemical_pivot = list_of_packages %>%
   group_by(chemical_name) %>% 
   summarize(n = sum(records)) %>% 
   arrange(desc(n)) %>% 
-  head(10)
+  head(20)
 
 # after split by country, sum the chemical records by country only for top chemicals
 pivot_chemical_country = locations %>%
