@@ -83,7 +83,8 @@ coordinates <- world_cities %>%
 
 list_of_packages = list_of_packages %>% 
   dplyr::filter(!is.na(chemical_name)) %>% 
-  dplyr::filter(!is.na(period))
+  dplyr::filter(!is.na(period)) %>% 
+  dplyr::filter(!str_like(location, "%null%"))
 
 # counts
 n_datasets = length(unique(list_of_packages$dataset[list_of_packages$dataset != ""]))
@@ -95,7 +96,6 @@ sum_records = sum(list_of_packages$records[list_of_packages$media != ""])
 
 # create pivot tables
 pivot_media <- list_of_packages %>%
-  dplyr::filter(media != "") %>% # is NA or empty string?
   group_by(media) %>%
   summarize(
     packages = n(),
@@ -105,13 +105,11 @@ pivot_media <- list_of_packages %>%
   arrange(desc(records))
 
 pivot_media_period <- list_of_packages %>%
-  dplyr::filter(media != "") %>% # is NA or empty string?
   group_by(media, period) %>%
   summarize(records = sum(records))
 
 # record and packages by dataset
 pivot_dataset = list_of_packages %>% 
-  dplyr::filter(!is.na(dataset)) %>% 
   group_by(dataset) %>% 
   summarize(
     packages = n(),
@@ -121,13 +119,11 @@ pivot_dataset = list_of_packages %>%
   arrange(desc(records))
 
 pivot_dataset_period = list_of_packages %>%
-  dplyr::filter(!is.na(dataset)) %>%
   group_by(dataset, period) %>%
   summarize(records = sum(records))
 
 # record by module and period
 pivot_module = list_of_packages %>% 
-  dplyr::filter(!is.na(dataset)) %>% 
   select(dataset, records) %>% 
   left_join(env_modules, by = join_by(dataset == dataset)) %>% 
   group_by(module) %>% 
@@ -137,7 +133,6 @@ pivot_module = list_of_packages %>%
 
 # record by module and period
 pivot_module_period = list_of_packages %>% 
-  dplyr::filter(!is.na(dataset)) %>% 
   select(dataset, period, records) %>% 
   left_join(env_modules, by = join_by(dataset == dataset)) %>% 
   group_by(module, period) %>% 
@@ -145,13 +140,11 @@ pivot_module_period = list_of_packages %>%
 
 # number of record by year
 pivot_period <- list_of_packages %>%
-  dplyr::filter(!is.na(period))  %>%
   group_by(period) %>%
   summarize(records = sum(records))
 
 # split column location by each individual country and extract records
 locations <- list_of_packages %>% 
-  dplyr::filter(media != "")  %>% # probably the sign was != and not ==
   select(location, period, chemical_name) %>% 
   separate_rows(location, sep = ", ", convert = TRUE) %>% 
   mutate(country_code = str_split_fixed(location, ' \\[', 2)[, 1]) %>% 
@@ -161,16 +154,17 @@ locations <- list_of_packages %>%
 
 # number or record by country
 pivot_country = locations %>% 
-  dplyr::filter(!is_null(country_code)) %>% 
-  dplyr::filter(country_code != "null") %>% 
+  dplyr::filter(!is_null(country_code)) %>%
+  dplyr::filter(country_code != "null") %>%
   group_by(country_code) %>% 
   summarize(scores = sum(score))
 
 # number of records by country an period
 pivot_country_period = locations %>%
-  dplyr::filter(!is_null(country_code)) %>% 
-  dplyr::filter(country_code != "null") %>%
-  dplyr::filter(!is.na(period)) %>% 
+  # dplyr::filter(!is_null(country_code)) %>% 
+  # dplyr::filter(country_code != "null") %>%
+  # dplyr::filter(country_code != "N/A") %>%
+  # # dplyr::filter(!is.na(period)) %>% 
   group_by(country_code, period) %>%
   summarize(scores = sum(score)) %>% 
   ungroup()
