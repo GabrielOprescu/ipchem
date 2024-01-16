@@ -119,9 +119,21 @@ pivot_dataset = list_of_packages %>%
   ungroup() %>% 
   arrange(desc(records))
 
+# pivot_dataset_period = list_of_packages %>%
+#   filter(!is.na(period)) %>% 
+#   group_by(dataset, period) %>%
+#   summarize(records = sum(records))
+
 pivot_dataset_period = list_of_packages %>%
   filter(!is.na(period)) %>% 
-  group_by(dataset, period) %>%
+  select(dataset, period, records) %>% 
+  left_join(pivot_dataset %>%
+              top_n(10, records) %>% 
+              select(-packages, -records) %>% 
+              mutate(top_10 = 1),
+            by = join_by(dataset == dataset)) %>% 
+  mutate(dataset = ifelse(is.na(top_10), 'OTHER', dataset)) %>% 
+  group_by(dataset, period) %>% 
   summarize(records = sum(records))
 
 # record by module and period
