@@ -36,7 +36,13 @@ env_modules = data.frame(
     'EMBLASII',
     'LUCAS',
     'LUCASPESTICIDES2018',
-    'WATCHLIST'
+    'WATCHLIST',
+    'FATE',
+    'IDRIP',
+    'ISPRAPESTICIDES',
+    'PROBE',
+    'SINPHONIE',
+    'WFD'
   ),
   module = c(
     'Environmental Monitoring',
@@ -71,6 +77,12 @@ env_modules = data.frame(
     'Environmental Monitoring',
     'Environmental Monitoring',
     'Environmental Monitoring',
+    'Environmental Monitoring',
+    'Environmental Monitoring',
+    'Human Biomonitoring',
+    'Environmental Monitoring',
+    'Human Biomonitoring',
+    'Indoor Air and Products',
     'Environmental Monitoring'
   )
 )
