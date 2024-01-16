@@ -31,7 +31,12 @@ env_modules = data.frame(
     'PHARMSUBA',
     'PROBEAGGREGATED',
     'WATERBASETCM',
-    'WATERQUALITY'
+    'WATERQUALITY',
+    'BIOSOIL',
+    'EMBLASII',
+    'LUCAS',
+    'LUCASPESTICIDES2018',
+    'WATCHLIST'
   ),
   module = c(
     'Environmental Monitoring',
@@ -41,7 +46,7 @@ env_modules = data.frame(
     'Environmental Monitoring',
     'Human Biomonitoring',
     'Human Biomonitoring',
-    'OTHER',
+    'Food and Feed',
     'Food and Feed',
     'Food and Feed',
     'Food and Feed',
@@ -52,7 +57,7 @@ env_modules = data.frame(
     'Human Biomonitoring',
     'Human Biomonitoring',
     'Human Biomonitoring',
-    'OTHER',
+    'Human Biomonitoring',
     'Human Biomonitoring',
     'Environmental Monitoring',
     'Human Biomonitoring',
@@ -60,6 +65,11 @@ env_modules = data.frame(
     'Indoor Air and Products',
     'Environmental Monitoring',
     'Human Biomonitoring',
+    'Environmental Monitoring',
+    'Environmental Monitoring',
+    'Environmental Monitoring',
+    'Environmental Monitoring',
+    'Environmental Monitoring',
     'Environmental Monitoring',
     'Environmental Monitoring'
   )
