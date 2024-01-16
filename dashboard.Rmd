@@ -82,17 +82,17 @@ coordinates <- world_cities %>%
 ```{r global, echo=FALSE, warning=FALSE}
 
 list_of_packages = list_of_packages %>% 
-  dplyr::filter(!is.na(chemical_name)) %>% 
-  dplyr::filter(!is.na(period)) %>% 
-  dplyr::filter(!str_like(location, "%null%"))
+  dplyr::filter(!is.na(chemical_name)) # %>% 
+  # dplyr::filter(!is.na(period)) %>% 
+  # dplyr::filter(!str_like(location, "%null%"))
 
 # counts
-n_datasets = length(unique(list_of_packages$dataset[list_of_packages$dataset != ""]))
-n_packages = length(unique(list_of_packages$package[list_of_packages$media != ""]))
+n_datasets = length(unique(list_of_packages$dataset))
+n_packages = length(unique(list_of_packages$package)) # NA is counted as 1. there are 2494 of them
 
 # sums
 
-sum_records = sum(list_of_packages$records[list_of_packages$media != ""])
+sum_records = sum(list_of_packages$records)
 
 # create pivot tables
 pivot_media <- list_of_packages %>%
@@ -105,6 +105,7 @@ pivot_media <- list_of_packages %>%
   arrange(desc(records))
 
 pivot_media_period <- list_of_packages %>%
+  filter(!is.na(period)) %>% 
   group_by(media, period) %>%
   summarize(records = sum(records))
 
@@ -119,6 +120,7 @@ pivot_dataset = list_of_packages %>%
   arrange(desc(records))
 
 pivot_dataset_period = list_of_packages %>%
+  filter(!is.na(period)) %>% 
   group_by(dataset, period) %>%
   summarize(records = sum(records))
 
@@ -133,15 +135,16 @@ pivot_module = list_of_packages %>%
 
 # record by module and period
 pivot_module_period = list_of_packages %>% 
+  filter(!is.na(period)) %>%
   select(dataset, period, records) %>% 
   left_join(env_modules, by = join_by(dataset == dataset)) %>% 
   group_by(module, period) %>% 
   summarize(records = sum(records))
 
 # number of record by year
-pivot_period <- list_of_packages %>%
-  group_by(period) %>%
-  summarize(records = sum(records))
+# pivot_period <- list_of_packages %>%
+#   group_by(period) %>%
+#   summarize(records = sum(records))
 
 # split column location by each individual country and extract records
 locations <- list_of_packages %>% 
