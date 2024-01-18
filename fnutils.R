@@ -130,3 +130,23 @@ get_csv_url = function(url){
   return(df)
   
 }
+
+
+bin_split = function(values, nbins){
+  
+  if (any(is.na(values)) | any(is.null(values))){
+    warning('The value list contains NA or null values')
+  }
+  
+  mn = min(values, na.rm = TRUE)
+  mx = max(values, na.rm = TRUE)
+  
+  stp = seq(mn, mx, as.integer(mx / nbins))
+  
+  stp = c(stp, mx)
+  
+  lst = cut(values, breaks = stp, labels = stp[-1], include.lowest = TRUE)
+  
+  return(lst)
+  
+}

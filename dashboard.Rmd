@@ -15,6 +15,7 @@ library(DT)
 library(plotly)
 library(flexdashboard)
 library(leaflet)
+library(maps)
 library(lubridate)
 source("fnutils.R")
 ```
@@ -76,6 +77,8 @@ world_cities <-
 
 coordinates <- world_cities %>% 
   dplyr::filter(capital == 'primary')
+
+wmap = maps::map("world", fill = TRUE, plot = FALSE)
 ```
 
 
@@ -233,19 +236,52 @@ country_coordinates <- pivot_country %>%
   left_join(coordinates, by = join_by(country_code == iso3)) %>%
   filter(!is.na(city))
 
-# label for pin on map
-content_popup <- paste(
-  sep = "<br/>",
-  paste("<b>", country_coordinates$country, "</b>"),
-  format(country_coordinates$scores, big.mark = ",")
-)
+# remove duplicates
+country_coordinates = country_coordinates %>% 
+  group_by(country) %>% 
+  mutate(rnk = row_number()) %>% 
+  ungroup() %>% 
+  filter(rnk == 1) %>% 
+  select(-rnk)
 
-content_label <-
-  paste(
-    country_coordinates$country,
-    ": ",
-    format(country_coordinates$scores, big.mark = ",")
-  )
+# normalize some names
+country_coordinates = country_coordinates %>%
+  mutate(country = ifelse(country == "Czechia", "Czech Republic", country)) %>%
+  mutate(country = ifelse(country == "Macedonia", "North Macedonia", country)) %>% 
+  mutate(country = ifelse(country == "United States", "USA", country)) %>% 
+  mutate(country = ifelse(country == "United Kingdom", "UK:Great Britain", country))
+
+### the map
+# color pallet based on records
+pal = colorNumeric(palette = "YlGnBu", domain = country_coordinates$scores, na.color = "#808080")
+
+temp_df = data.frame(country = wmap$names)
+
+temp_df = temp_df %>% 
+  left_join(country_coordinates %>% 
+              select(country, scores),
+            by = join_by(country == country)) %>% 
+  mutate(color = pal(scores))
+
+wmap$color = temp_df$color
+wmap$scores = temp_df$scores
+wmap$labels = paste(wmap$names, paste(":", ifelse(
+  is.na(wmap$scores), "", formatC(wmap$scores, big.mark = ",", format = "f", digits = 0)
+)), sep = "\n")
+
+# # label for pin on map
+# content_popup <- paste(
+#   sep = "<br/>",
+#   paste("<b>", country_coordinates$country, "</b>"),
+#   format(country_coordinates$scores, big.mark = ",")
+# )
+# 
+# content_label <-
+#   paste(
+#     country_coordinates$country,
+#     ": ",
+#     format(country_coordinates$scores, big.mark = ",")
+#   )
 
 
 ```
@@ -253,7 +289,7 @@ content_label <-
 ```{r}
 # cleanup
 
-rm(list_of_packages, locations, world_cities)
+rm(list_of_packages, locations, world_cities, temp_df)
 
 ```
 
@@ -509,20 +545,33 @@ Row
 ```{r}
 
 
-m <-
-  leaflet(data = country_coordinates, options = leafletOptions(minZoom = 2, maxZoom = 9)) %>%
-  setView(14.4214, 50.0875, zoom = 3) %>%
-  addTiles() %>%  # Add default OpenStreetMap map tiles
-  #addProviderTiles("OpenStreetMap.Mapnik") %>%
-  
-  addMarkers(
-    ~ lng,
-    ~ lat,
-    popup = ~ as.character(content_popup),
-    label = ~ as.character(content_label)
+mp = leaflet(data = wmap,
+             options = leafletOptions(
+               minZoom = 2,
+               maxZoom = 4,
+               center = c(50.0875, 14.4214),
+               zoom = 3
+             )) %>%
+  addTiles() %>%
+  addPolygons(
+    fillColor = ~ color,
+    fillOpacity = 0.5,
+    stroke = TRUE,
+    color = "black",
+    dashArray = "3",
+    weight = 1,
+    label = ~ labels,
+    popup = ~ names
+  ) %>%
+  addLegend(
+    "bottomright",
+    pal = pal,
+    values = ~ scores,
+    title = "Records",
+    opacity = 1
   )
 
-m  # Print the map
+mp
 
 ```
 
