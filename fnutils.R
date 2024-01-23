@@ -87,6 +87,67 @@ env_modules = data.frame(
   )
 )
 
+eu_27 = data.frame(
+  country = c(
+    'Austria',
+    'Belgium',
+    'Bulgaria',
+    'Croatia',
+    'Cyprus',
+    'Czech Republic',
+    'Denmark',
+    'Estonia',
+    'Finland',
+    'France',
+    'Germany',
+    'Greece',
+    'Hungary',
+    'Ireland',
+    'Italy',
+    'Latvia',
+    'Lithuania',
+    'Luxembourg',
+    'Malta',
+    'Netherlands',
+    'Poland',
+    'Portugal',
+    'Romania',
+    'Slovakia',
+    'Slovenia',
+    'Spain',
+    'Sweden'
+  ),
+  code = c(
+    'AUT',
+    'BEL',
+    'BGR',
+    'HRV',
+    'CYP',
+    'CZE',
+    'DNK',
+    'EST',
+    'FIN',
+    'FRA',
+    'DEU',
+    'GRC',
+    'HUN',
+    'IRL',
+    'ITA',
+    'LVA',
+    'LTU',
+    'LUX',
+    'MLT',
+    'NLD',
+    'POL',
+    'PRT',
+    'ROU',
+    'SVK',
+    'SVN',
+    'ESP',
+    'SWE'
+  )
+)
+
 clean_name = function(nm) {
   return(
     str_to_lower(
