@@ -647,6 +647,7 @@ fig <-
       zerolinewidth = 2,
       gridcolor = 'ffff'
     ),
+    legend = list(x = 0.1, y = 0.9),
     showlegend = TRUE
   )
 
