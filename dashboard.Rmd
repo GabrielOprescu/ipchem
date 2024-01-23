@@ -23,7 +23,9 @@ source("fnutils.R")
 Sidebar {.sidebar}
 =======================================================================
 
-This space is reserved for adding information about the charts and tables in the dashboard.
+<p style="font-size:13px">
+IPCHEM allows the exploration of chemical occurrence data across different media (environment, human bio-monitoring, food and feed, products and indoor air)
+</p>
 
 <hr>
 
@@ -36,24 +38,47 @@ This space is reserved for adding information about the charts and tables in the
 <!--         } -->
 <!-- </style> -->
 
-<p>This report was created on:</p>
+<p style="font-size:13px">Report generated on: <b>`r Sys.Date()`</b></p>
 
-<!-- <strong id="currentDate"></strong> -->
-<!-- <script> -->
-<!--   var currentDate = new Date(); -->
-<!--   var day = currentDate.getDate(); -->
-<!--   var month = currentDate.toLocaleString('default', { month: 'short' }); // Using the toLocaleString method to get the short month name -->
-<!--   var year = currentDate.getFullYear(); -->
+<hr>
 
-<!--   var formattedDate = day + '-' + month.toUpperCase() + '-' + year; -->
+<h5>Data layers</h5>
 
-<!--   document.getElementById('currentDate').innerHTML = formattedDate; -->
-<!-- </script> -->
+<p style="font-size:13px">
+<b>Record:</b> one measurement made at one point in time for a single place (1 measurement, 1 time, 1 location)
+</p>
 
-<strong>
-`r Sys.Date()`
-</strong>
+<p style="font-size:13px">
+<b>Package:</b> a series of measurements for one chemical, at one point in time, for multiple locations (n measurements, 1 chemical, 1 time, n locations) 
+</p>
 
+<p style="font-size:13px">
+<b>Dataset:</b> data provider dealing with chemical monitoring data
+</p>
+
+<p style="font-size:13px">
+<b>Media:</b> environment where a measurement is made
+</p>
+
+<p style="font-size:13px">
+<b>Module:</b> group of thematic areas where measurements are made
+</p>
+
+<hr>
+
+<h5>Usage</h5>
+
+<p style="font-size:13px"> 
+<b>Plots:</b> fast double click on any item in legend to isolate it. Single click to remove it. Advanced features using top right tooltips.
+</p>
+
+<p style="font-size:13px">
+<b>Tables:</b> default sorted in descending order by number of records
+</p>
+
+<p  style="font-size:13px">
+<b>Map:</b> hover to show the number of records by country. 
+</p>
 
 
 ```{r import_data, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
@@ -340,23 +365,23 @@ valueBox(prettyNum(sum_records, big.mark = ","), icon = "fa-database", color = "
 
 Row
 -------------------------------------
-### Country by chemicals
+### Top 20 chemicals records by country
 
 ```{r}
 
-fig <-
+fig <- pivot_chemical_country %>% 
+  mutate(country = str_sub(country, 1, 15)) %>% 
   plot_ly(
-    x = ~ country,
+    x = ~ chemical_name,
     y = ~ records,
-    data = pivot_chemical_country,
     type = 'bar',
-    name = ~chemical_name
+    name = ~ country
   ) %>%
   layout(
     # title = 'Records per year',
     plot_bgcolor = '#e5ecf6',
     xaxis = list(
-      title = 'Country',
+      title = 'Chemical',
       zerolinecolor = '#ffff',
       zerolinewidth = 2,
       gridcolor = 'ffff'
