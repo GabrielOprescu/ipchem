@@ -117,6 +117,7 @@ list_of_packages = list_of_packages %>%
 # counts
 n_datasets = length(unique(list_of_packages$dataset))
 n_packages = length(unique(list_of_packages$package)) # NA is counted as 1. there are 2494 of them
+n_chemicals = length(unique(list_of_packages$chemical_name[!is.na(list_of_packages$chemical_name)]))
 
 # sums
 
@@ -338,29 +339,40 @@ Dashboard
 Row
 -------------------------------------
 
-### Number of Datasets
+### Number of Records
 
 ```{r}
 
-valueBox(prettyNum(n_datasets, big.mark = ","), icon = "fa-database", color = "blue")
+valueBox(prettyNum(sum_records, big.mark = ","), icon = "fa-database", color = " #7cabde")
 
 ```
+
 
 ### Number of Packages
 
 ```{r}
 
-valueBox(prettyNum(n_packages, big.mark = ","), icon = "fa-database", color = "orange")
+valueBox(prettyNum(n_packages, big.mark = ","), icon = "fa-database", color = " #7cabde")
 
 ```
 
-### Number of Records
+### Number of Chemicals
 
 ```{r}
 
-valueBox(prettyNum(sum_records, big.mark = ","), icon = "fa-database", color = "green")
+valueBox(prettyNum(n_chemicals, big.mark = ","), icon = "fa-database", color = " #7cabde")
 
 ```
+
+### Number of Datasets
+
+```{r}
+
+valueBox(prettyNum(n_datasets, big.mark = ","), icon = "fa-database", color = " #7cabde")
+
+```
+
+
 
 
 Row
@@ -403,7 +415,7 @@ fig
 Row
 -------------------------------------
 
-### Cummulative records by Module
+### Cumulative records by Module
 
 ```{r}
 
@@ -445,7 +457,7 @@ fig
 
 
 
-### Cummulative records by Media
+### Cumulative records by Media
 ```{r}
 
 fig <-
@@ -484,12 +496,13 @@ fig
 
 ```
 
-### Cummulative records by Dataset
+### Cumulative records by Dataset
 ```{r}
 
 fig <-
   pivot_dataset_period %>%
-  filter(period >= 1990) %>%
+  filter(period >= 1990) %>% 
+  # mutate(records = log10(records)) %>% 
   # mutate(dataset = str_sub(dataset, 1, 10)) %>% # so the legend won't be pushed right
   plot_ly(
     x = ~ period,
@@ -498,7 +511,9 @@ fig <-
     type = 'scatter',
     mode = "lines",
     name = ~ dataset,
-    fill = 'tozeroy'
+    fill = 'tozeroy',
+    alpha = 0.5, 
+    alpha_stroke = 1
   ) %>%
   layout(
     # title = 'Records per year and dataset',
@@ -615,7 +630,7 @@ mp
 ```
 
 
-### Cummulative country level records by year
+### Cumulative country level records by year
 
 ```{r}
 
