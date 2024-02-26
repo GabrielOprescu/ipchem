@@ -389,12 +389,14 @@ Row
 ```{r}
 
 fig <- pivot_chemical_country %>% 
+  mutate(color_code = as.character(as.integer(as.factor(country)))) %>% 
   mutate(country = str_sub(country, 1, 15)) %>% 
   plot_ly(
     x = ~ chemical_name,
     y = ~ records,
     type = 'bar',
-    name = ~ country
+    # name = ~ country,
+    color = ~ country
   ) %>%
   layout(
     # title = 'Records per year',
