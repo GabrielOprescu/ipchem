@@ -45,6 +45,9 @@ IPCHEM allows the exploration of chemical occurrence data across different media
 <h5>Data layers</h5>
 
 <p style="font-size:13px">
+
+<b>Substance:</b> the object of the measurement
+
 <b>Record:</b> one measurement made at one point in time for a single place (1 measurement, 1 time, 1 location)
 </p>
 
@@ -363,7 +366,7 @@ valueBox(prettyNum(n_packages, big.mark = ","), icon = "fa-database", color = " 
 
 ```
 
-### Number of Chemicals
+### Number of Substances
 
 ```{r}
 
@@ -384,7 +387,7 @@ valueBox(prettyNum(n_datasets, big.mark = ","), icon = "fa-database", color = " 
 
 Row
 -------------------------------------
-### Top 20 chemicals records by country
+### Top 20 substances recorded by country
 
 ```{r}
 
