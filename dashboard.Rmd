@@ -288,12 +288,18 @@ country_coordinates = country_coordinates %>%
   mutate(country = ifelse(country == "Czechia", "Czech Republic", country)) %>%
   mutate(country = ifelse(country == "Macedonia", "North Macedonia", country)) %>% 
   mutate(country = ifelse(country == "United States", "USA", country)) %>% 
-  mutate(country = ifelse(country == "United Kingdom", "UK:Great Britain", country))
+  mutate(country = ifelse(country == "United Kingdom", "UK", country))
 
 ### the map
 # color pallet based on records
 pal = colorNumeric(palette = "YlGnBu", domain = country_coordinates$records, na.color = "#808080")
 # pal = colorQuantile(palette = "YlGnBu", domain = country_coordinates$scores, n = 5, na.color = "#808080")
+
+
+flag = stringr::str_locate(wmap$names, "\\w+:")
+wmap$end = flag[, 2]
+wmap$names = ifelse(is.na(wmap$end), wmap$names, str_sub(wmap$names, 1, wmap$end-1))
+
 
 temp_df = data.frame(country = wmap$names)
 
@@ -305,6 +311,7 @@ temp_df = temp_df %>%
 
 wmap$color = temp_df$color
 wmap$records = temp_df$records
+
 wmap$labels = paste(wmap$names, paste(":", ifelse(
   is.na(wmap$records), "", formatC(wmap$records, big.mark = ",", format = "f", digits = 0)
 )), sep = "\n")
