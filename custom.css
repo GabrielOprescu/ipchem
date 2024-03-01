@@ -27,3 +27,12 @@ body {
 strong {
   font-weight: bold;
 }
+
+.value-box .caption {
+  font-size: 18px;
+}
+
+.chart-title {
+  font-weight: 500;
+  font-size: 18px;
+}

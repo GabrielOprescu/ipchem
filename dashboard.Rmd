@@ -24,7 +24,7 @@ Sidebar {.sidebar}
 =======================================================================
 
 <p style="font-size:13px">
-IPCHEM allows the exploration of chemical occurrence data across different media (environment, human bio-monitoring, food and feed, products and indoor air)
+This dashboard shows the IPCHEM data integration statistics, considering the chemicals, countries, media, sampling years. It includes only the publicly available data, while data sets with restricted access are not counted here.
 </p>
 
 <hr>
@@ -38,33 +38,37 @@ IPCHEM allows the exploration of chemical occurrence data across different media
 <!--         } -->
 <!-- </style> -->
 
-<p style="font-size:13px">Report generated on: <b>`r Sys.Date()`</b></p>
-
-<hr>
 
 <h5>Data layers</h5>
 
 <p style="font-size:13px">
-
 <b>Substance:</b> the object of the measurement
-
-<b>Record:</b> one measurement made at one point in time for a single place (1 measurement, 1 time, 1 location)
 </p>
 
 <p style="font-size:13px">
-<b>Package:</b> a series of measurements for one chemical, at one point in time, for multiple locations (n measurements, 1 chemical, 1 time, n locations) 
+<b>Record:</b>
+<ul>
+<li style="font-size:13px"><u>single measurement:</u> individual measurement made at one point in time
+</li>
+<li style="font-size:13px"><u>aggregated data:</u> a set of one statistical values (e.g. mean, percentile, etc.), obtained by aggregating several individual measurements
+</li>
+</ul>
 </p>
 
 <p style="font-size:13px">
-<b>Dataset:</b> data provider dealing with chemical monitoring data
+<b>Dataset:</b> a collection of data, published or curated by a single agent, and available for access or download in one or more representations
 </p>
 
 <p style="font-size:13px">
-<b>Media:</b> environment where a measurement is made
+<b>Package:</b> a file containing a subset of the data records of a dataset grouped by chemical, media and period. Cumulative packages help downloading whole datasets, divided by period in the case of regular data collections (e.g. EFSAMOPER) 
 </p>
 
 <p style="font-size:13px">
-<b>Module:</b> group of thematic areas where measurements are made
+<b>Media:</b> medium which was sampled and analysed in the measurement
+</p>
+
+<p style="font-size:13px">
+<b>Module:</b> thematic area of the measurements
 </p>
 
 <hr>
@@ -72,7 +76,7 @@ IPCHEM allows the exploration of chemical occurrence data across different media
 <h5>Usage</h5>
 
 <p style="font-size:13px"> 
-<b>Plots:</b> fast double click on any item in legend to isolate it. Single click to remove it. Advanced features using top right tooltips.
+<b>Plots:</b> click on any item from the legend to remove it from the plot. Advanced features using top right tooltips.
 </p>
 
 <p style="font-size:13px">
@@ -82,6 +86,9 @@ IPCHEM allows the exploration of chemical occurrence data across different media
 <p  style="font-size:13px">
 <b>Map:</b> hover to show the number of records by country. 
 </p>
+
+<hr>
+<p style="font-size:13px">Report generated on: <b>`r format(Sys.Date(), "%m/%d/%Y")`</b></p>
 
 
 ```{r import_data, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
@@ -113,9 +120,7 @@ wmap = maps::map("world", fill = TRUE, plot = FALSE)
 ```{r global, echo=FALSE, warning=FALSE}
 
 list_of_packages = list_of_packages %>% 
-  dplyr::filter(!is.na(chemical_name)) # %>% 
-  # dplyr::filter(!is.na(period)) %>% 
-  # dplyr::filter(!str_like(location, "%null%"))
+  dplyr::filter(!is.na(chemical_name))
 
 # counts
 n_datasets = length(unique(list_of_packages$dataset))
@@ -153,11 +158,6 @@ pivot_dataset = list_of_packages %>%
   ungroup() %>% 
   arrange(desc(records))
 
-# pivot_dataset_period = list_of_packages %>%
-#   filter(!is.na(period)) %>% 
-#   group_by(dataset, period) %>%
-#   summarize(records = sum(records))
-
 pivot_dataset_period = list_of_packages %>%
   filter(!is.na(period)) %>% 
   select(dataset, period, records) %>% 
@@ -190,11 +190,6 @@ pivot_module_period = list_of_packages %>%
   summarize(records = sum(records)) %>%
   mutate(records = cumsum(records))
 
-# number of record by year
-# pivot_period <- list_of_packages %>%
-#   group_by(period) %>%
-#   summarize(records = sum(records))
-
 # split column location by each individual country and extract records
 locations <- list_of_packages %>% 
   select(location, period, chemical_name) %>% 
@@ -217,27 +212,12 @@ pivot_region_period = locations %>%
                distinct(), # some countries have more than 1 primary city
             by = join_by(country_code == iso3)) %>% 
   left_join(eu_27 %>% 
-              mutate(region = 'eu_27'),
+              mutate(region = 'EU27'),
             by = join_by(country_code == code)) %>% 
-  mutate(region = ifelse(is.na(region), 'other', region)) %>% 
+  mutate(region = ifelse(is.na(region), 'Outside_EU27', region)) %>% 
   group_by(region, period) %>%
   summarize(records = sum(records)) %>% 
   mutate(records = cumsum(records))
-
-# # number of records by country an period
-# pivot_country_period = locations %>%
-#   group_by(country_code, period) %>%
-#   summarize(scores = sum(score)) %>% 
-#   ungroup()
-# 
-# # bring the nice name of the country
-# pivot_country_period = pivot_country_period %>% 
-#   left_join(coordinates %>% 
-#               select(country, iso3) %>% 
-#               distinct(), # some countries have more than 1 primary city
-#             by = join_by(country_code == iso3)) %>% 
-#   filter(!is.na(country)) %>% # 1A0 country code does not exist in coordinates. what is it?
-#   select(country, period, scores)
 
 # which chemical has most of the records. top 10
 chemical_pivot = list_of_packages %>% 
@@ -262,15 +242,6 @@ pivot_chemical_country = pivot_chemical_country %>%
             by = join_by(country_code == iso3)) %>% 
   filter(!is.na(country)) %>% # 1A0 country code does not exist in coordinates. what is it?
   select(chemical_name, country, records)
-
-
-# # create also the total for each country are record it as a country
-# pivot_country_period = pivot_country_period %>% 
-#   bind_rows(pivot_country_period %>% 
-#               group_by(period) %>% 
-#               summarize(scores = sum(scores)) %>% 
-#               mutate(country = "TOTAL") %>% 
-#               select(country, period, scores))
 
 # create map
 # extract coordinates for each country capital 
@@ -319,21 +290,6 @@ wmap$labels = paste(wmap$names, paste(":", ifelse(
   is.na(wmap$records), "", formatC(wmap$records, big.mark = ",", format = "f", digits = 0)
 )), sep = "\n")
 
-# # label for pin on map
-# content_popup <- paste(
-#   sep = "<br/>",
-#   paste("<b>", country_coordinates$country, "</b>"),
-#   format(country_coordinates$scores, big.mark = ",")
-# )
-# 
-# content_label <-
-#   paste(
-#     country_coordinates$country,
-#     ": ",
-#     format(country_coordinates$scores, big.mark = ",")
-#   )
-
-
 ```
 
 ```{r}
@@ -348,6 +304,24 @@ Dashboard
 
 Row
 -------------------------------------
+
+### Number of Substances
+
+```{r}
+
+valueBox(prettyNum(n_chemicals, big.mark = ","), icon = "fa-database", color = " #7cabde")
+
+```
+
+
+### Number of Datasets
+
+```{r}
+
+valueBox(prettyNum(n_datasets, big.mark = ","), icon = "fa-database", color = " #7cabde")
+
+```
+
 
 ### Number of Records
 
@@ -365,23 +339,6 @@ valueBox(prettyNum(sum_records, big.mark = ","), icon = "fa-database", color = "
 valueBox(prettyNum(n_packages, big.mark = ","), icon = "fa-database", color = " #7cabde")
 
 ```
-
-### Number of Substances
-
-```{r}
-
-valueBox(prettyNum(n_chemicals, big.mark = ","), icon = "fa-database", color = " #7cabde")
-
-```
-
-### Number of Datasets
-
-```{r}
-
-valueBox(prettyNum(n_datasets, big.mark = ","), icon = "fa-database", color = " #7cabde")
-
-```
-
 
 
 
@@ -434,15 +391,19 @@ Row
 fig <-
   pivot_module_period %>%
   filter(period >= 1990) %>%
+  mutate(symbol = as.factor(module)) %>%
+  mutate(symbol = as.integer(symbol)) %>% 
   # mutate(module = str_sub(module, 1, 10)) %>% # so the legend won't be pushed right
   plot_ly(
     x = ~ period,
     y = ~ records,
     # data = pivot_country_period,
     type = 'scatter',
-    mode = "lines",
+    mode = "markers",
     name = ~ module,
-    fill = 'tozeroy'
+    symbol = ~ symbol,
+    fill = 'tozeroy',
+    marker = list(size = 10)
   ) %>%
   layout(
     # title = 'Records per year and country',
@@ -475,15 +436,19 @@ fig
 fig <-
   pivot_media_period %>%
   filter(period >= 1990) %>%
+  mutate(symbol = as.factor(media)) %>%
+  mutate(symbol = as.integer(symbol)) %>% 
   # mutate(media = str_sub(media, 1, 10)) %>% # so the legend won't be pushed right
   plot_ly(
     x = ~ period,
     y = ~ records,
     # data = pivot_country_period,
     type = 'scatter',
-    mode = "lines",
+    mode = "markers",
     name = ~ media,
-    fill = 'tozeroy'
+    symbol = ~ symbol,
+    fill = 'tozeroy',
+    marker = list(size = 10)
   ) %>%
   layout(
     # title = 'Records per year and dataset',
@@ -511,9 +476,13 @@ fig
 ### Cumulative records by Dataset
 ```{r}
 
+symbols <- c("circle", 'circle-open-dot', 'triangle-left-open', 'triangle-down-dot', 'cross-open', 'x-open', 'triangle-down', 'square', '4', '2')
+
 fig <-
   pivot_dataset_period %>%
   filter(period >= 1990) %>% 
+  mutate(symbol = as.factor(dataset)) %>%
+  mutate(symbol = as.integer(symbol)) %>% 
   # mutate(records = log10(records)) %>% 
   # mutate(dataset = str_sub(dataset, 1, 10)) %>% # so the legend won't be pushed right
   plot_ly(
@@ -521,11 +490,14 @@ fig <-
     y = ~ records,
     # data = pivot_country_period,
     type = 'scatter',
-    mode = "lines",
+    mode = "markers",
     name = ~ dataset,
+    symbol = ~ symbol,
+    symbols = symbols,
     fill = 'tozeroy',
-    alpha = 0.5, 
-    alpha_stroke = 1
+    # alpha = 0.5, 
+    # alpha_stroke = 1,
+    marker = list(size = 10)
   ) %>%
   layout(
     # title = 'Records per year and dataset',
@@ -649,15 +621,19 @@ mp
 fig <-
   pivot_region_period %>%
   filter(period >= 1990) %>% 
+  mutate(symbol = as.factor(region)) %>%
+  mutate(symbol = as.integer(symbol)) %>%
   # mutate(country = str_sub(country, 1, 13)) %>% # so the legend won't be pushed right
   plot_ly(
     x = ~ period,
     y = ~ records,
     # data = pivot_country_period,
     type = 'scatter',
-    mode = "lines",
+    mode = "lines+markers",
     name = ~ region,
-    fill = 'tozeroy'
+    symbol = ~ symbol,
+    fill = 'tozeroy',
+    marker = list(size = 10)
   ) %>%
   layout(
     # title = 'Records per year and country',
