@@ -9,6 +9,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
+library(readr)
 library(stringr)
 library(tidyverse)
 library(DT)
@@ -100,20 +101,9 @@ url = "https://ipchem.jrc.ec.europa.eu/public/IPCHEM_public_dataset_packages.csv
 list_of_packages = get_csv_url(url)
 list_of_packages = chg_col_names(list_of_packages)
 
-world_cities <-
-  read.table(
-    "./data/worldcities.csv",
-    header = TRUE,
-    sep = ",",
-    quote = "\"",
-    dec = ".",
-    encoding = "UTF-8"
-  )
+country_iso = readRDS("./data/country_iso")
 
-coordinates <- world_cities %>% 
-  dplyr::filter(capital == 'primary')
-
-wmap = maps::map("world", fill = TRUE, plot = FALSE)
+wmap <- maps::map("world", fill = TRUE, plot = FALSE)
 ```
 
 
@@ -207,10 +197,10 @@ pivot_country = locations %>%
   summarize(records = sum(records))
 
 pivot_region_period = locations %>% 
-  inner_join(coordinates %>%
-               select(country, iso3) %>% 
+  inner_join(country_iso %>%
+               select(country, country_code) %>% 
                distinct(), # some countries have more than 1 primary city
-            by = join_by(country_code == iso3)) %>% 
+            by = join_by(country_code == country_code)) %>% 
   left_join(eu_27 %>% 
               mutate(region = 'EU27'),
             by = join_by(country_code == code)) %>% 
@@ -236,33 +226,33 @@ pivot_chemical_country = locations %>%
 
 # bring the nice name of the country
 pivot_chemical_country = pivot_chemical_country %>% 
-  left_join(coordinates %>% 
-              select(country, iso3) %>% 
+  left_join(country_iso %>% 
+              select(country, country_code) %>% 
               distinct(), # some countries have more than 1 primary city
-            by = join_by(country_code == iso3)) %>% 
+            by = join_by(country_code == country_code)) %>% 
   filter(!is.na(country)) %>% # 1A0 country code does not exist in coordinates. what is it?
   select(chemical_name, country, records)
 
 # create map
 # extract coordinates for each country capital 
 country_coordinates <- pivot_country %>%
-  left_join(coordinates, by = join_by(country_code == iso3)) %>%
-  filter(!is.na(city))
+  left_join(country_iso, by = join_by(country_code == country_code)) %>%
+  filter(!is.na(country))
 
-# remove duplicates
-country_coordinates = country_coordinates %>% 
-  group_by(country) %>% 
-  mutate(rnk = row_number()) %>% 
-  ungroup() %>% 
-  filter(rnk == 1) %>% 
-  select(-rnk)
+# # remove duplicates
+# country_coordinates = country_coordinates %>% 
+#   group_by(country) %>% 
+#   mutate(rnk = row_number()) %>% 
+#   ungroup() %>% 
+#   filter(rnk == 1) %>% 
+#   select(-rnk)
 
-# normalize some names
-country_coordinates = country_coordinates %>%
-  mutate(country = ifelse(country == "Czechia", "Czech Republic", country)) %>%
-  mutate(country = ifelse(country == "Macedonia", "North Macedonia", country)) %>% 
-  mutate(country = ifelse(country == "United States", "USA", country)) %>% 
-  mutate(country = ifelse(country == "United Kingdom", "UK", country))
+# # normalize some names
+# country_coordinates = country_coordinates %>%
+#   mutate(country = ifelse(country == "Czechia", "Czech Republic", country)) %>%
+#   mutate(country = ifelse(country == "Macedonia", "North Macedonia", country)) %>% 
+#   mutate(country = ifelse(country == "United States", "USA", country)) %>% 
+#   mutate(country = ifelse(country == "United Kingdom", "UK", country))
 
 ### the map
 # color pallet based on records
@@ -276,6 +266,9 @@ wmap$names = ifelse(is.na(wmap$end), wmap$names, str_sub(wmap$names, 1, wmap$end
 
 
 temp_df = data.frame(country = wmap$names)
+
+temp_df = temp_df %>% 
+   mutate(country = ifelse(country == "UK", "United Kingdom", country))
 
 temp_df = temp_df %>% 
   left_join(country_coordinates %>% 
