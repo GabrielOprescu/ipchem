@@ -583,7 +583,7 @@ mp = leaflet(data = wmap,
                center = c(50.0875, 14.4214),
                zoom = 3
              )) %>%
-  addTiles() %>%
+  addTiles(urlTemplate = "https://gisco-services.ec.europa.eu/maps/tiles/OSMCartoComposite/EPSG4362/{z}/{x}/{y}.png") %>%
   addPolygons(
     fillColor = ~ color,
     fillOpacity = 0.5,
