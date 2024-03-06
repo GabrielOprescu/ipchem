@@ -43,7 +43,7 @@ This dashboard shows the IPCHEM data integration statistics, considering the che
 <h5>Data layers</h5>
 
 <p style="font-size:13px">
-<b>Substance:</b> the object of the measurement
+<b>Substance:</b> in IPCHEM is the analyte measured in a sample. This includes mostly classical chemicals, but includes also analytes such as Particulate Matter (PM 2.5 or PM10) or process-generated materials such as dust.
 </p>
 
 <p style="font-size:13px">
