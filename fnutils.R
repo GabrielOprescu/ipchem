@@ -11,6 +11,7 @@ env_modules = data.frame(
     'CNRPFAS',
     'DANISHHBM',
     'DEMOCOPHES',
+    'DIOXINDB',
     'EFSACONTAMINANTS',
     'EFSAMCPD',
     'EFSAMOPER',
@@ -42,7 +43,8 @@ env_modules = data.frame(
     'ISPRAPESTICIDES',
     'PROBE',
     'SINPHONIE',
-    'WFD'
+    'WFD',
+    'IDRIP'
   ),
   module = c(
     'Environmental Monitoring',
@@ -52,6 +54,7 @@ env_modules = data.frame(
     'Environmental Monitoring',
     'Human Biomonitoring',
     'Human Biomonitoring',
+    'Human Biomonitoring',
     'Food and Feed',
     'Food and Feed',
     'Food and Feed',
@@ -83,7 +86,8 @@ env_modules = data.frame(
     'Environmental Monitoring',
     'Human Biomonitoring',
     'Indoor Air and Products',
-    'Environmental Monitoring'
+    'Environmental Monitoring',
+    'Human Biomonitoring'
   )
 )
 

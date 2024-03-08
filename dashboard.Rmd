@@ -165,6 +165,7 @@ pivot_dataset_period = list_of_packages %>%
 pivot_module = list_of_packages %>% 
   select(dataset, records) %>% 
   left_join(env_modules, by = join_by(dataset == dataset)) %>% 
+  # mutate(module = ifelse(is.na(module), "Other", module)) %>% 
   group_by(module) %>% 
   summarize(packages = n(),
     records = sum(records))%>% 
